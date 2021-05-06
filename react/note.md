@@ -68,3 +68,122 @@ for(<label>) –> htmlFor
 3. 绑定事件方法的 this 指向
 4. 指定组件状态
 5. 第3, 4条的内容如果都没有不要写这个 constructor .
+
+## setState 的新写法
+
+之前 setState 接收的对象参数, 现在的写法是用函数来返回这个对象, 并传参数 prevState , 这个参数代替 this.state. 注意 e.target.value 要放在函数体外面.
+
+```js
+handleInput(e) {
+  // 新react的setState不希望接收对象了
+  // 改为接收一个函数来返回对象
+  /* this.setState({
+    inputValue: e.target.value,
+  }) */
+  const inputValue = e.target.value
+  this.setState(() => ({
+    inputValue,
+  }))
+}
+
+addItem() {
+  /* this.setState({
+    list,
+    inputValue: "",
+  }) */
+  this.setState((prevState) => ({
+    list: [...prevState.list, prevState.inputValue],
+    inputValue: "",
+  }))
+}
+```
+
+
+
+## 传值类型校验和传值默认值
+
+### 导入
+
+```js
+import PropTypes from 'prop-types'
+```
+
+### 类型校验
+
+```js
+ListItem.propTypes = {
+  // isRequired 必传
+  test: PropTypes.string.isRequired,
+  // 指定范围的某种类型
+  index: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  deleteItem: PropTypes.func,
+  content: PropTypes.string,
+}
+```
+
+### 给必须的值设置默认值保底
+
+```js
+// 有了默认值, 即使没有传这个值也不会报警告了
+ListItem.defaultProps = {
+  test: "hello world",
+}
+```
+
+## props, state 和 render 函数的关系
+
+**当组件的 props , state 发生改变时, render 函数就会重新执行**
+
+
+
+**页面初始化的时候, render 函数就会先执行一次.**
+
+
+
+**父组件的 render 函数重新执行时, 它的子组件的 render 函数都将被重新执行一次.**
+
+
+
+## 虚拟 DOM
+
+> 如果我们自己来实现 react 做的事情应该是什么样的步骤呢?
+>
+> 1. state 数据
+> 2. JSX 模板
+> 3. 数据 + 模板 结合, 生成真实的 DOM , 来显示.
+> 4. state 发生改变
+> 5. 数据 + 模板 结合, 生成真实的 DOM, 替换原始的 DOM.
+>
+> 这个过程的缺陷:
+>
+> - 生成了 2 次真实的 DOM, 并且第二次生成的 DOM 整段替换第一次的, 非常耗性能.
+>
+> 改进: 
+>
+> 1. state 数据
+> 2. JSX 模板
+> 3. 数据 + 模板 结合, 生成真实的 DOM , 来显示.
+> 4. state 发生改变
+> 5. 数据 + 模板 结合, 生成真实的 DOM, 不着急替换原始的 DOM.
+> 6. 新的 DOM (DocumentFragment) 和原始的 DOM 比对, 找出差异
+> 7. 替换差异的部分.
+>
+> 这种方式的缺陷:
+>
+> - DOM 替换节约了性能, 两次生成的 DOM 对比又消耗了性能.
+>
+> react 的方式:
+>
+> 1. state 数据
+> 2. JSX 模板
+> 3. 数据 + 模板 生成虚拟 DOM .(用来描述真实 DOM 的 js 对象)
+> 4. 根据虚拟 DOM 生成真实的 DOM , 来显示.
+> 5. state 发生改变
+> 6. 生成新的虚拟 DOM.
+> 7. 比较虚拟 DOM 的区别
+> 8. 渲染真实 DOM .
+>
+> 这样做性能节省在哪里?
+>
+> - 减少真实 DOM 的创建和真实 DOM 的对比
+
