@@ -1,0 +1,39 @@
+.show {
+  animation: show-hide 3s ease-in both;
+  font-size: 20px;
+}
+
+.hide {
+  animation: hide-show 3s ease-in both;
+  font-size: 20px;
+}
+
+@keyframes show-hide {
+  0% {
+    opacity: 0;
+    color: red;
+  }
+  50% {
+    opacity: .5;
+    color: green;
+  }
+  100% {
+    opacity: 1;
+    color: blue
+  }
+}
+
+@keyframes hide-show {
+  0% {
+    opacity: 1;
+    color: blue;
+  }
+  50% {
+    opacity: .5;
+    color: green;
+  }
+  100% {
+    opacity: 0;
+    color: red
+  }
+}

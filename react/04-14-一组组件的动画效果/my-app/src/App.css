@@ -1,0 +1,31 @@
+.fade-enter {
+  opacity: 0;
+  color: pink;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  color: green;
+  transition: opacity 1s ease-in, color 1s ease-in;
+}
+
+.fade-enter-done {
+  opacity: 1;
+  color: green;
+}
+
+.fade-exit {
+  opacity: 1;
+  color: green;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  color: pink;
+  transition: opacity 1s ease-in, color 1s ease-in;
+}
+
+.fade-exit-deno {
+  opacity: 0;
+  color: pink;
+}
