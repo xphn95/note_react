@@ -557,3 +557,196 @@ export const getListData = () => {
 }
 ```
 
+## 什么是 redux 中间件
+
+redux 中间件就是对 dispatch 的封装, dispatch 是介于 action 和 store 之间的, 在不使用中间件时, action 只能是对象, dispatch 把 action 对象直接传递给 reducer, 而使用中间件时, action 还可以是一个方法, dispatch 会判断 action 是对象还是方法, 如果是对象就直接传递, 如果是方法就把这个方法给执行了再把对象形式的 action 传递给 reducer. 我觉得就是在 action 中写回调函数, redux-thunk 是上面的做法(异步的逻辑写在 action 中), 接下来学习的 redux-saga 是把异步的逻辑拆分到单独的文件中.
+
+
+
+## redux-saga 的使用
+
+### 安装
+
+```sh
+yarn add redux-saga
+```
+
+### 引入
+
+1. 在 `src/store`目录下创建一个文件
+
+```js
+// 基础结构
+function* todoSaga() {
+
+}
+
+export default todoSaga
+```
+
+
+
+2. 在`src/store/index.js`中(需要添加或修改的部分代码)
+
+```js
+import createSagaMiddleware from 'redux-saga'
+
+// 导入上面创建的文件
+import todoSagas from './sagas'
+
+// 创建实例
+const sagaMiddleware = createSagaMiddleware()
+
+const enhancer = composeEnhancers(
+  // applyMiddleware(...[thunk]),
+  applyMiddleware(...[sagaMiddleware]),
+)
+const store = createStore(reducer, enhancer)
+
+sagaMiddleware.run(todoSagas)
+```
+
+3. 完整的 sagas.js
+
+```js
+import axios from 'axios'
+import { takeEvery, put } from 'redux-saga/effects'
+import { SAGA_INIT_LIST } from './actionTypes'
+import { getData } from './actionCreators'
+
+function* getInitList() {
+  /* 
+    发送异步请求
+    创建 action
+    派发 action
+  */
+  const res = yield axios
+    .get('https://jsonplaceholder.typicode.com/todos')
+  const list = []
+  res.data.slice(0, 5).map(item => {
+    list.push(item.title)
+    return true
+  })
+  const action = getData(list)
+  yield put(action)
+}
+
+function* todoSaga() {
+  // 捕获 type , 执行对应的函数
+  yield takeEvery(SAGA_INIT_LIST, getInitList)
+}
+
+export default todoSaga
+
+```
+
+## react-redux 的使用
+
+主要了解2个api: provider 和 connect
+
+provider 组件包裹的元素都可以访问 provider 的 store 属性绑定的 store 数据.
+
+
+
+```js
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { Provider } from 'react-redux'
+import TodoList from './todoList'
+import store from './store'
+
+const App = (
+  <Provider store={store}>
+    <TodoList />
+  </Provider>
+)
+
+ReactDOM.render(
+  App,
+  document.getElementById('root')
+)
+
+```
+
+connect是一个连接组件和 store 的函数, 它接收2个参数, 一个是 store 中的数据在组件中state的映射, 另一个是派发的 action 与组件的方法的映射. 自定义的组件在 react-redux 中的角色本质就是一个子组件, 并且状态也抽出来放到 connect 的参数中, 那么它就可以是一个无状态的组件.
+
+
+
+```js
+import React from 'react'
+import { connect } from 'react-redux'
+import { getInputItemInfoAction, getAddItemAction, getDeleteItemAction } from './store/actionCreators'
+
+const TodoList = (props) => {
+  const { inputValue, list, handleInput, addItem, enterAdd, deleteItem } = props
+  const ulBorder = list.length ? '1px solid #000' : 'none'
+  return (
+    <div>
+      <input type="text" 
+    		value={inputValue} 
+				onChange={handleInput} 
+				style={
+          {
+          	width: '300px', 
+          	boxSizing: 'border-box', 
+          	marginRight: '10px'
+        	}
+				} 
+       	onKeyUp={enterAdd} />
+      <button onClick={addItem}>提交</button>
+      <ul 
+				style={
+          {
+          	listStyle: 'none', 
+          	padding: 0, 
+          	border: ulBorder, 
+          	width: '300px', 
+          	margin: '10px 0 0'
+        	}
+				}>
+        {
+          list.map((item, index) => {
+            return <li 
+            	key={index} 
+            	style={{border: '1px solid #000'}} 
+							onClick={() => deleteItem(index)}
+            >{item}</li>
+          })
+        }
+      </ul>
+    </div>
+  )
+}
+
+const mapStateToProps = (store) => {
+  return {
+    inputValue: store.inputValue,
+    list: store.list
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  const methods = {
+    handleInput({target: {value}}) {
+      const action = getInputItemInfoAction(value)
+      dispatch(action)
+    },
+    addItem() {
+      const action = getAddItemAction()
+      dispatch(action)
+    },
+    enterAdd({keyCode}) {
+      keyCode === 13 && methods.addItem()
+    },
+    deleteItem(index) {
+      const action = getDeleteItemAction(index)
+      dispatch(action)
+    }
+  }
+  return methods
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(TodoList)
+
+```
+
